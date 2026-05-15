@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<title>中式九球追分联机计分器 - 免费两人三人台球计分系统</title>
+<style>
+*{
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "微软雅黑", sans-serif;
+}
+body{
+  background-color: #072e1f;
+  color: #fff;
+  padding: 15px;
+}
+.container{
+  max-width: 600px;
+  margin: 0 auto;
+}
+.title{
+  text-align: center;
+  font-size: 26px;
+  color: #ffd700;
+  margin-bottom: 20px;
+  font-weight: bold;
+}
+.box{
+  background: #0f4732;
+  border-radius: 14px;
+  padding: 18px;
+  margin-bottom: 16px;
+}
+input{
+  width: 100%;
+  padding: 12px 15px;
+  border-radius: 10px;
+  border: none;
+  font-size: 16px;
+  margin: 8px 0;
+  text-align: center;
+  background: #fff;
+  color: #000;
+}
+button{
+  padding: 11px 16px;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  margin: 6px 4px;
+  cursor: pointer;
+  font-weight: bold;
+}
+.btn-gold{background: #ffd700; color: #000;}
+.btn-green{background: #22c55e; color: #fff;}
+.btn-blue{background: #3b82f6; color: #fff;}
+.btn-red{background: #ef4444; color: #fff;}
+.btn-purple{background: #a855f7; color: #fff;}
+.btn-dark{background: #1f2937; color: #fff;}
+.row{
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.player-card{
+  background: #145c40;
+  border-radius: 14px;
+  padding: 20px 15px;
+  margin-bottom: 15px;
+  text-align: center;
+}
+.player-name{
+  font-size: 20px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.edit-name{
+  font-size: 14px;
+  color: #ffd700;
+  cursor: pointer;
+}
+.score-num{
+  font-size: 52px;
+  font-weight: bold;
+  color: #ffd700;
+  margin: 12px 0;
+}
+.hide{display: none !important;}
+.tip{
+  text-align: center;
+  color: #ccc;
+  font-size: 14px;
+  margin: 10px 0;
+}
+.self-tag{
+  background: #ffd700;
+  color: #000;
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+.history-item{
+  background: #104f36;
+  padding: 12px;
+  border-radius: 8px;
+  margin: 8px 0;
+  font-size: 15px;
+}
+.popup-mask{
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+.popup{
+  width: 85%;
+  background: #fff;
+  color: #000;
+  border-radius: 12px;
+  padding: 20px;
+}
+</style>
+</head>
+<meta name="description" content="中式台球九球追分联机计分系统，支持大金10分、小金7分、普胜4分、±1分，两人三人实时联机，负分显示，免费使用。">
+<meta name="keywords" content="九球追分计分器,中式台球联机计分,台球计分系统,大金小金普胜,免费台球计分">
+<body>
+<div class="container">
+  <div class="title">🎱 中式九球追分 联机计分</div>
+
+  <!-- 建房/加入 -->
+  <div class="box">
+    <div class="row">
+      <button class="btn-gold" onclick="createRoom()">🏠 创建房间</button>
+      <button class="btn-blue" onclick="showJoinBox()">🔑 加入房间</button>
+    </div>
+    <div class="tip" id="roomTip">未进入房间</div>
+    <div id="joinBox" class="hide">
+      <input placeholder="输入6位房间码" id="roomCodeInput">
+      <button class="btn-green" style="width:100%" onclick="joinRoom()">确认加入</button>
+    </div>
+  </div>
+
+  <!-- 选择自己身份 -->
+  <div class="box">
+    <div class="tip">请选择你的身份</div>
+    <div class="row">
+      <button class="btn-green" onclick="setSelf(1)">玩家一</button>
+      <button class="btn-green" onclick="setSelf(2)">玩家二</button>
+      <button class="btn-green" onclick="setSelf(3)">玩家三</button>
+    </div>
+    <div class="tip">当前身份：<span id="selfText">未选择</span></div>
+  </div>
+
+  <!-- 2/3人切换 -->
+  <div class="box">
+    <div class="row">
+      <button class="btn-dark" onclick="setMode(2)">2人对局</button>
+      <button class="btn-dark" onclick="setMode(3)">3人对局</button>
+    </div>
+  </div>
+
+  <!-- 玩家1 -->
+  <div class="player-card" id="p1Card">
+    <div class="player-name">
+      <span id="name1">玩家一</span>
+      <span class="edit-name" onclick="editNameOpen(1)">✏️改名</span>
+      <span class="self-tag hide" id="tag1">我</span>
+    </div>
+    <div class="score-num" id="score1">0</div>
+    <div class="row">
+      <button class="btn-red" onclick="addScore(1,10)">大金+10</button>
+      <button class="btn-purple" onclick="addScore(1,7)">小金+7</button>
+      <button class="btn-blue" onclick="addScore(1,4)">普胜+4</button>
+      <button class="btn-green" onclick="addScore(1,1)">+1</button>
+      <button class="btn-red" onclick="addScore(1,-1)">-1</button>
+    </div>
+  </div>
+
+  <!-- 玩家2 -->
+  <div class="player-card" id="p2Card">
+    <div class="player-name">
+      <span id="name2">玩家二</span>
+      <span class="edit-name" onclick="editNameOpen(2)">✏️改名</span>
+      <span class="self-tag hide" id="tag2">我</span>
+    </div>
+    <div class="score-num" id="score2">0</div>
+    <div class="row">
+      <button class="btn-red" onclick="addScore(2,10)">大金+10</button>
+      <button class="btn-purple" onclick="addScore(2,7)">小金+7</button>
+      <button class="btn-blue" onclick="addScore(2,4)">普胜+4</button>
+      <button class="btn-green" onclick="addScore(2,1)">+1</button>
+      <button class="btn-red" onclick="addScore(2,-1)">-1</button>
+    </div>
+  </div>
+
+  <!-- 玩家3 -->
+  <div class="player-card hide" id="p3Card">
+    <div class="player-name">
+      <span id="name3">玩家三</span>
+      <span class="edit-name" onclick="editNameOpen(3)">✏️改名</span>
+      <span class="self-tag hide" id="tag3">我</span>
+    </div>
+    <div class="score-num" id="score3">0</div>
+    <div class="row">
+      <button class="btn-red" onclick="addScore(3,10)">大金+10</button>
+      <button class="btn-purple" onclick="addScore(3,7)">小金+7</button>
+      <button class="btn-blue" onclick="addScore(3,4)">普胜+4</button>
+      <button class="btn-green" onclick="addScore(3,1)">+1</button>
+      <button class="btn-red" onclick="addScore(3,-1)">-1</button>
+    </div>
+  </div>
+
+  <!-- 功能按钮 -->
+  <div class="box">
+    <div class="row">
+      <button class="btn-red" onclick="resetRound()">本局重置</button>
+      <button class="btn-gold" onclick="saveRecord()">保存本局战绩</button>
+      <button class="btn-blue" onclick="showHistory()">查看历史战绩</button>
+    </div>
+  </div>
+</div>
+
+<!-- 改名弹窗 -->
+<div class="popup-mask hide" id="editMask">
+  <div class="popup">
+    <div style="text-align:center;font-size:18px;margin-bottom:15px">修改玩家昵称</div>
+    <input placeholder="输入昵称" id="editNameInput">
+    <div class="row" style="margin-top:15px">
+      <button class="btn-dark" onclick="closeEditName()">取消</button>
+      <button class="btn-green" onclick="confirmEditName()">确定</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let roomCode = "";
+let selfRole = 0;
+let editTarget = 0;
+
+// 房间数据
+let roomData = {
+  mode:2,
+  s1:0, s2:0, s3:0,
+  n1:"玩家一", n2:"玩家二", n3:"玩家三"
+};
+
+// 生成6位房间码
+function randomCode(){
+  return Math.floor(100000 + Math.random()*900000).toString();
+}
+
+// 创建房间
+function createRoom(){
+  roomCode = randomCode();
+  roomData = {
+    mode:2,
+    s1:0,s2:0,s3:0,
+    n1:"玩家一",n2:"玩家二",n3:"玩家三"
+  };
+  localStorage.setItem("nineBall_"+roomCode, JSON.stringify(roomData));
+  document.getElementById("roomTip").innerText = "✅ 房间码："+roomCode+"，可发给好友加入";
+  startSync();
+}
+
+// 显示加入输入框
+function showJoinBox(){
+  document.getElementById("joinBox").classList.remove("hide");
+}
+
+// 加入房间
+function joinRoom(){
+  let code = document.getElementById("roomCodeInput").value.trim();
+  if(!code) return alert("请输入6位房间码");
+  let data = localStorage.getItem("nineBall_"+code);
+  if(!data) return alert("房间不存在或已过期");
+  roomCode = code;
+  roomData = JSON.parse(data);
+  document.getElementById("roomTip").innerText = "✅ 已加入房间："+roomCode;
+  refreshUI();
+  startSync();
+}
+
+// 定时同步
+function startSync(){
+  setInterval(()=>{
+    if(!roomCode) return;
+    let data = localStorage.getItem("nineBall_"+roomCode);
+    if(data) roomData = JSON.parse(data);
+    refreshUI();
+  },600);
+}
+
+// 设置自身身份
+function setSelf(num){
+  selfRole = num;
+  document.getElementById("selfText").innerText = "玩家"+num;
+  // 标识我
+  document.querySelectorAll(".self-tag").forEach(el=>el.classList.add("hide"));
+  document.getElementById("tag"+num).classList.remove("hide");
+}
+
+// 设置2/3人模式
+function setMode(m){
+  if(!roomCode) return alert("请先创建或加入房间");
+  roomData.mode = m;
+  saveRoom();
+}
+
+// 加分逻辑（只能改自己分数）
+function addScore(p,val){
+  if(!roomCode) return alert("请先进入房间");
+  if(selfRole !== p) return alert("只能操作自己的分数！");
+  if(p===1) roomData.s1 += val;
+  if(p===2) roomData.s2 += val;
+  if(p===3) roomData.s3 += val;
+  saveRoom();
+}
+
+// 保存房间数据
+function saveRoom(){
+  localStorage.setItem("nineBall_"+roomCode, JSON.stringify(roomData));
+}
+
+// 刷新界面
+function refreshUI(){
+  document.getElementByIdscore1.innerText = roomData.s1;
+  document.getElementById("score2").innerText = roomData.s2;
+  document.getElementById("score3").innerText = roomData.s3;
+
+  document.getElementById("name1").innerText = roomData.n1;
+  document.getElementById("name2").innerText = roomData.n2;
+  document.getElementById("name3").innerText = roomData.n3;
+
+  if(roomData.mode ===3){
+    document.getElementById("p3Card").classList.remove("hide");
+  }else{
+    document.getElementById("p3Card").classList.add("hide");
+  }
+}
+
+// 本局重置
+function resetRound(){
+  if(!roomCode) return alert("请先进入房间");
+  roomData.s1 = 0;
+  roomData.s2 = 0;
+  roomData.s3 = 0;
+  saveRoom();
+}
+
+// 改名弹窗
+function editNameOpen(num){
+  editTarget = num;
+  document.getElementById("editNameInput").value = roomData["n"+num];
+  document.getElementById("editMask").classList.remove("hide");
+}
+function closeEditName(){
+  document.getElementById("editMask").classList.add("hide");
+}
+function confirmEditName(){
+  let name = document.getElementById("editNameInput").value.trim();
+  if(!name) return alert("昵称不能为空");
+  roomData["n"+editTarget] = name;
+  saveRoom();
+  closeEditName();
+}
+
+// 保存战绩
+function saveRecord(){
+  let history = JSON.parse(localStorage.getItem("nineBall_history")||"[]");
+  let time = new Date().toLocaleString();
+  history.push({
+    time:time,
+    n1:roomData.n1,s1:roomData.s1,
+    n2:roomData.n2,s2:roomData.s2,
+    n3:roomData.n3,s3:roomData.s3,
+    mode:roomData.mode
+  });
+  localStorage.setItem("nineBall_history",JSON.stringify(history));
+  alert("本局战绩已保存");
+}
+
+// 查看历史战绩
+function showHistory(){
+  let history = JSON.parse(localStorage.getItem("nineBall_history")||"[]");
+  if(history.length===0) return alert("暂无历史战绩");
+  let str = "📜 历史战绩：\n\n";
+  history.forEach((item,idx)=>{
+    str += `第${idx+1}局 ${item.time}\n`;
+    str += `${item.n1}：${item.s1}分\n`;
+    str += `${item.n2}：${item.s2}分\n`;
+    if(item.mode===3) str += `${item.n3}：${item.s3}分\n`;
+    str += "——————\n";
+  });
+  alert(str);
+}
+</script>
+</body>
+</html>
